@@ -1,0 +1,154 @@
+{
+    "Comment": "Event Ticketing Saga — Reserve Seat → Process Payment → Confirm Ticket. Compensating transactions on failure.",
+    "StartAt": "ReserveSeat",
+    "States": {
+        "ReserveSeat": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::http:invoke",
+            "Parameters": {
+                "ApiEndpoint.$": "States.Format('https://{}/tickets/reserve', $.ticket_service_host)",
+                "Method": "POST",
+                "RequestBody": {
+                    "event_id.$": "$.event_id",
+                    "seat_id.$": "$.seat_id",
+                    "user_id.$": "$.user_id"
+                },
+                "Headers": {
+                    "Content-Type": "application/json"
+                }
+            },
+            "ResultPath": "$.reserve_result",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 2,
+                    "BackoffRate": 2
+                }
+            ],
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "Next": "BookingFailed",
+                    "ResultPath": "$.error"
+                }
+            ],
+            "Next": "ProcessPayment"
+        },
+        "ProcessPayment": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::http:invoke",
+            "Parameters": {
+                "ApiEndpoint.$": "States.Format('https://{}/payments/charge', $.payment_service_host)",
+                "Method": "POST",
+                "RequestBody": {
+                    "booking_id.$": "$.reserve_result.ResponseBody.booking_id",
+                    "user_id.$": "$.user_id",
+                    "amount_cents.$": "$.amount_cents",
+                    "card_token.$": "$.card_token"
+                },
+                "Headers": {
+                    "Content-Type": "application/json"
+                }
+            },
+            "ResultPath": "$.payment_result",
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "Next": "CompensateReleaseSeat",
+                    "ResultPath": "$.error"
+                }
+            ],
+            "Next": "ConfirmTicket"
+        },
+        "ConfirmTicket": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::http:invoke",
+            "Parameters": {
+                "ApiEndpoint.$": "States.Format('https://{}/tickets/confirm', $.ticket_service_host)",
+                "Method": "POST",
+                "RequestBody": {
+                    "booking_id.$": "$.reserve_result.ResponseBody.booking_id",
+                    "event_id.$": "$.event_id",
+                    "seat_id.$": "$.seat_id"
+                },
+                "Headers": {
+                    "Content-Type": "application/json"
+                }
+            },
+            "ResultPath": "$.confirm_result",
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "Next": "CompensateRefundPayment",
+                    "ResultPath": "$.error"
+                }
+            ],
+            "Next": "BookingSucceeded"
+        },
+        "BookingSucceeded": {
+            "Type": "Succeed",
+            "Comment": "Ticket successfully purchased — Saga complete"
+        },
+        "CompensateReleaseSeat": {
+            "Type": "Task",
+            "Comment": "Compensating transaction: Release seat reservation because payment failed",
+            "Resource": "arn:aws:states:::http:invoke",
+            "Parameters": {
+                "ApiEndpoint.$": "States.Format('https://{}/tickets/release', $.ticket_service_host)",
+                "Method": "POST",
+                "RequestBody": {
+                    "booking_id.$": "$.reserve_result.ResponseBody.booking_id",
+                    "event_id.$": "$.event_id",
+                    "seat_id.$": "$.seat_id"
+                }
+            },
+            "ResultPath": "$.compensate_result",
+            "Next": "BookingFailed"
+        },
+        "CompensateRefundPayment": {
+            "Type": "Task",
+            "Comment": "Compensating transaction: Refund payment because confirmation failed",
+            "Resource": "arn:aws:states:::http:invoke",
+            "Parameters": {
+                "ApiEndpoint.$": "States.Format('https://{}/payments/refund', $.payment_service_host)",
+                "Method": "POST",
+                "RequestBody": {
+                    "payment_id.$": "$.payment_result.ResponseBody.payment_id",
+                    "booking_id.$": "$.reserve_result.ResponseBody.booking_id",
+                    "reason": "confirm_failure"
+                }
+            },
+            "ResultPath": "$.refund_result",
+            "Next": "CompensateReleaseSeatAfterRefund"
+        },
+        "CompensateReleaseSeatAfterRefund": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::http:invoke",
+            "Parameters": {
+                "ApiEndpoint.$": "States.Format('https://{}/tickets/release', $.ticket_service_host)",
+                "Method": "POST",
+                "RequestBody": {
+                    "booking_id.$": "$.reserve_result.ResponseBody.booking_id",
+                    "event_id.$": "$.event_id",
+                    "seat_id.$": "$.seat_id"
+                }
+            },
+            "ResultPath": "$.compensate_release_result",
+            "Next": "BookingFailed"
+        },
+        "BookingFailed": {
+            "Type": "Fail",
+            "Error": "BookingFailed",
+            "Cause": "Saga failed — all compensating transactions completed"
+        }
+    }
+}

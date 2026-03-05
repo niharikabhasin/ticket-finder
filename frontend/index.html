@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>TicketHub — Live Event Ticketing</title>
+  <meta name="description"
+    content="Buy tickets for the hottest live events. Real-time seat locking — no double bookings ever." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #08090d;
+      --bg2: #111218;
+      --bg3: #16181f;
+      --glass: rgba(255, 255, 255, .04);
+      --accent: #6c47ff;
+      --aglow: rgba(108, 71, 255, .35);
+      --a2: #f72585;
+      --ok: #06d6a0;
+      --warn: #f4a261;
+      --danger: #ef233c;
+      --t1: #f1f1f1;
+      --t2: #8b8fa8;
+      --t3: #4d5068;
+      --border: rgba(255, 255, 255, .07);
+      --r: 16px;
+      --r2: 8px
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--t1);
+      min-height: 100vh;
+      overflow-x: hidden
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg)
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 3px
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 62px;
+      background: rgba(8, 9, 13, .9);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border)
+    }
+
+    .logo {
+      font-size: 1.25rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #6c47ff, #f72585);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #f72585;
+      animation: blink 1.4s infinite
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .3
+      }
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px
+    }
+
+    .nav-btn {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      color: var(--t2);
+      padding: 7px 14px;
+      border-radius: var(--r2);
+      cursor: pointer;
+      font-size: .825rem;
+      font-family: inherit;
+      transition: all .2s
+    }
+
+    .nav-btn:hover {
+      color: var(--t1);
+      border-color: var(--accent)
+    }
+
+    .nav-back {
+      display: none
+    }
+
+    /* SECTIONS */
+    .page {
+      display: none;
+      padding-top: 62px;
+      min-height: 100vh
+    }
+
+    .page.active {
+      display: block
+    }
+
+    /* HERO */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 4rem 2rem 2.5rem;
+      text-align: center
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% -5%, rgba(108, 71, 255, .28) 0%, transparent 70%)
+    }
+
+    .hero h1 {
+      position: relative;
+      font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+      font-weight: 900;
+      letter-spacing: -.02em;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #fff 0%, #a89be8 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent
+    }
+
+    .hero p {
+      position: relative;
+      font-size: 1rem;
+      color: var(--t2);
+      margin: .75rem auto 0;
+      max-width: 480px
+    }
+
+    /* SEARCH + FILTERS */
+    .search-bar {
+      max-width: 560px;
+      margin: 1.5rem auto 0;
+      position: relative
+    }
+
+    .search-bar input {
+      width: 100%;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px 16px 13px 44px;
+      color: var(--t1);
+      font-size: .95rem;
+      font-family: inherit;
+      transition: border-color .2s
+    }
+
+    .search-bar input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--aglow)
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--t3);
+      font-size: 1rem
+    }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 1.25rem auto;
+      max-width: 700px;
+      padding: 0 1rem
+    }
+
+    .filter-btn {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      color: var(--t2);
+      padding: 7px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: .8rem;
+      font-family: inherit;
+      transition: all .2s;
+      white-space: nowrap
+    }
+
+    .filter-btn.active,
+    .filter-btn:hover {
+      background: rgba(108, 71, 255, .15);
+      border-color: rgba(108, 71, 255, .5);
+      color: #b3a4f5
+    }
+
+    /* EVENTS GRID */
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.25rem;
+      padding: 0 2rem 3rem;
+      max-width: 1400px;
+      margin: 0 auto
+    }
+
+    .event-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .25s, box-shadow .25s, border-color .25s
+    }
+
+    .event-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 50px rgba(108, 71, 255, .18);
+      border-color: rgba(108, 71, 255, .35)
+    }
+
+    .card-img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      display: block;
+      background: linear-gradient(135deg, #1a1030, #0d1a2a)
+    }
+
+    .card-body {
+      padding: 1.1rem
+    }
+
+    .tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: .5rem
+    }
+
+    .tag {
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: rgba(108, 71, 255, .12);
+      color: #9d8ef5;
+      border: 1px solid rgba(108, 71, 255, .25)
+    }
+
+    .tag.sold-out {
+      background: rgba(239, 35, 60, .12);
+      color: #f47a8a;
+      border-color: rgba(239, 35, 60, .25)
+    }
+
+    .card-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: .35rem;
+      line-height: 1.3
+    }
+
+    .card-meta {
+      font-size: .78rem;
+      color: var(--t2);
+      display: flex;
+      flex-direction: column;
+      gap: 3px
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: .9rem;
+      padding-top: .9rem;
+      border-top: 1px solid var(--border)
+    }
+
+    .price-from {
+      font-size: .7rem;
+      color: var(--t3)
+    }
+
+    .price-amt {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--ok)
+    }
+
+    .avail-badge {
+      font-size: .72rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(6, 214, 160, .08);
+      color: var(--ok);
+      border: 1px solid rgba(6, 214, 160, .25)
+    }
+
+    .avail-badge.low {
+      background: rgba(244, 162, 97, .08);
+      color: var(--warn);
+      border-color: rgba(244, 162, 97, .25)
+    }
+
+    .avail-badge.sold {
+      background: rgba(239, 35, 60, .08);
+      color: var(--danger);
+      border-color: rgba(239, 35, 60, .2)
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg2) 25%, var(--bg3) 50%, var(--bg2) 75%);
+      background-size: 400% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: var(--r);
+      height: 300px
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 100% 0
+      }
+
+      100% {
+        background-position: -100% 0
+      }
+    }
+
+    /* DETAIL PAGE */
+    .detail-layout {
+      display: grid;
+      grid-template-columns: 1fr 390px;
+      gap: 2rem;
+      padding: 2rem;
+      max-width: 1300px;
+      margin: 0 auto
+    }
+
+    @media(max-width:900px) {
+      .detail-layout {
+        grid-template-columns: 1fr
+      }
+    }
+
+    .detail-hero {
+      position: relative;
+      border-radius: var(--r);
+      overflow: hidden;
+      height: 280px;
+      margin-bottom: 1.5rem
+    }
+
+    .detail-hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover
+    }
+
+    .detail-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 2rem 1.5rem 1.25rem;
+      background: linear-gradient(transparent, rgba(0, 0, 0, .92))
+    }
+
+    .detail-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      line-height: 1.2
+    }
+
+    .detail-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+      margin-top: .6rem;
+      font-size: .82rem;
+      color: var(--t2)
+    }
+
+    .detail-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px
+    }
+
+    /* SEAT MAP */
+    .map-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: .75rem
+    }
+
+    .map-title {
+      font-size: .95rem;
+      font-weight: 600
+    }
+
+    .legend {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem
+    }
+
+    .leg {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: .72rem;
+      color: var(--t2)
+    }
+
+    .leg-dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 3px;
+      border: 2px solid
+    }
+
+    .stage {
+      text-align: center;
+      padding: .4rem 2rem;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: .7rem;
+      font-weight: 600;
+      letter-spacing: .1em;
+      color: var(--t3);
+      margin-bottom: 1.75rem
+    }
+
+    .sec-group {
+      margin-bottom: 1.5rem
+    }
+
+    .sec-label {
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--t3);
+      margin-bottom: .4rem
+    }
+
+    .seat-row {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 5px;
+      align-items: center
+    }
+
+    .row-lbl {
+      font-size: .6rem;
+      color: var(--t3);
+      width: 14px;
+      text-align: center
+    }
+
+    .seat {
+      width: 28px;
+      height: 26px;
+      border-radius: 5px 5px 3px 3px;
+      border: 2px solid;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .58rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, .4);
+      transition: transform .15s
+    }
+
+    .seat:hover:not(.sold):not(.locked) {
+      transform: scale(1.25);
+      z-index: 5
+    }
+
+    .seat.available {
+      background: #1e3a2f;
+      border-color: #06d6a0
+    }
+
+    .seat.locked {
+      background: #3a2a00;
+      border-color: #f4a261;
+      cursor: not-allowed;
+      animation: pwarn 2s infinite
+    }
+
+    .seat.sold {
+      background: #2a0f1a;
+      border-color: #ef233c;
+      cursor: not-allowed;
+      opacity: .55
+    }
+
+    .seat.selected {
+      background: #2a1a4a;
+      border-color: #6c47ff;
+      box-shadow: 0 0 0 3px var(--aglow)
+    }
+
+    @keyframes pwarn {
+
+      0%,
+      100% {
+        box-shadow: none
+      }
+
+      50% {
+        box-shadow: 0 0 8px rgba(244, 162, 97, .5)
+      }
+    }
+
+    /* CHECKOUT PANEL */
+    .checkout {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 1.4rem;
+      position: sticky;
+      top: 78px
+    }
+
+    .co-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 1rem
+    }
+
+    .timer-bar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: rgba(244, 162, 97, .08);
+      border: 1px solid rgba(244, 162, 97, .3);
+      border-radius: 8px;
+      padding: 9px 13px;
+      margin-bottom: 1rem
+    }
+
+    .timer-bar.on {
+      display: flex
+    }
+
+    .timer-cd {
+      margin-left: auto;
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--warn);
+      font-variant-numeric: tabular-nums
+    }
+
+    .seat-preview {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .9rem;
+      margin-bottom: 1rem;
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--t3);
+      font-size: .85rem
+    }
+
+    .sp-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: .85rem;
+      padding: 3px 0
+    }
+
+    .sp-row .lbl {
+      color: var(--t2)
+    }
+
+    .sp-row .val {
+      font-weight: 600
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: .75rem 0
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: .95rem;
+      font-weight: 700
+    }
+
+    .total-row .val {
+      color: var(--ok)
+    }
+
+    .inp-grp {
+      margin-bottom: .85rem
+    }
+
+    .inp-grp label {
+      display: block;
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--t2);
+      margin-bottom: 5px
+    }
+
+    .inp-grp label .req {
+      color: var(--a2);
+      margin-left: 3px
+    }
+
+    input[type=text],
+    input[type=email] {
+      width: 100%;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 13px;
+      color: var(--t1);
+      font-size: .875rem;
+      font-family: inherit;
+      transition: border-color .2s
+    }
+
+    input[type=text]:focus,
+    input[type=email]:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--aglow)
+    }
+
+    input.err {
+      border-color: var(--danger) !important
+    }
+
+    .err-msg {
+      font-size: .7rem;
+      color: var(--danger);
+      margin-top: 3px
+    }
+
+    .card-row {
+      display: grid;
+      grid-template-columns: 1fr 80px 70px;
+      gap: 8px
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: .95rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all .2s;
+      margin-top: 6px
+    }
+
+    .btn-pri {
+      background: linear-gradient(135deg, var(--accent), #4c2ec9);
+      color: #fff
+    }
+
+    .btn-pri:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 28px var(--aglow)
+    }
+
+    .btn-pri:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      transform: none
+    }
+
+    .btn-ok {
+      background: linear-gradient(135deg, var(--ok), #059669);
+      color: #fff
+    }
+
+    .btn-ok:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(6, 214, 160, .3)
+    }
+
+    .btn-ok:disabled {
+      opacity: .4;
+      cursor: not-allowed
+    }
+
+    .fee-note {
+      font-size: .7rem;
+      color: var(--t3);
+      text-align: center;
+      margin-top: 6px
+    }
+
+    .saga-log {
+      display: none;
+      background: #050507;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .9rem;
+      margin-top: .75rem;
+      font-size: .72rem;
+      font-family: monospace;
+      max-height: 160px;
+      overflow-y: auto
+    }
+
+    .saga-log.on {
+      display: block
+    }
+
+    .sline {
+      padding: 2px 0
+    }
+
+    .sline.s {
+      color: var(--ok)
+    }
+
+    .sline.e {
+      color: var(--danger)
+    }
+
+    .sline.p {
+      color: var(--warn)
+    }
+
+    .sline.c {
+      color: var(--a2)
+    }
+
+    /* SUCCESS */
+    #page-success {
+      text-align: center;
+      padding: 6rem 2rem
+    }
+
+    .s-icon {
+      font-size: 5rem;
+      animation: bounce .6s cubic-bezier(.36, .07, .19, .97)
+    }
+
+    @keyframes bounce {
+      0% {
+        transform: scale(0)
+      }
+
+      60% {
+        transform: scale(1.2)
+      }
+
+      100% {
+        transform: scale(1)
+      }
+    }
+
+    .s-title {
+      font-size: 2.5rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--ok), #059669);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 1rem 0
+    }
+
+    .ticket-card {
+      display: inline-block;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 1.75rem;
+      margin: 1.5rem auto;
+      text-align: left;
+      min-width: 340px;
+      max-width: 440px;
+      position: relative;
+      overflow: hidden
+    }
+
+    .ticket-card::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      right: -60px;
+      width: 150px;
+      height: 150px;
+      background: radial-gradient(circle, rgba(6, 214, 160, .15), transparent 70%);
+      border-radius: 50%
+    }
+
+    .ticket-ref {
+      font-size: .75rem;
+      color: var(--t2);
+      font-family: monospace;
+      margin-bottom: 1rem;
+      padding: .5rem .75rem;
+      background: var(--glass);
+      border-radius: 6px;
+      word-break: break-all
+    }
+
+    .ticket-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: .875rem
+    }
+
+    .ticket-row:last-child {
+      border-bottom: none
+    }
+
+    .ticket-row .lbl {
+      color: var(--t2)
+    }
+
+    .ticket-row .val {
+      font-weight: 600
+    }
+
+    .qr-mock {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), var(--a2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin: 1rem auto 0
+    }
+
+    /* FAQ */
+    .faq-section {
+      padding: 3rem 2rem;
+      max-width: 780px;
+      margin: 0 auto
+    }
+
+    .faq-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      text-align: center
+    }
+
+    .faq-item {
+      border: 1px solid var(--border);
+      border-radius: var(--r2);
+      margin-bottom: 10px;
+      overflow: hidden
+    }
+
+    .faq-q {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: .9rem 1.1rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: .9rem;
+      transition: background .2s
+    }
+
+    .faq-q:hover {
+      background: var(--glass)
+    }
+
+    .faq-a {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .3s ease
+    }
+
+    .faq-a.open {
+      max-height: 200px
+    }
+
+    .faq-a p {
+      padding: .75rem 1.1rem 1rem;
+      font-size: .85rem;
+      color: var(--t2);
+      line-height: 1.6
+    }
+
+    .chevron {
+      transition: transform .3s
+    }
+
+    .faq-item.open .chevron {
+      transform: rotate(180deg)
+    }
+
+    /* FOOTER */
+    footer {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 2rem;
+      margin-top: 2rem
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto
+    }
+
+    @media(max-width:700px) {
+      .footer-grid {
+        grid-template-columns: 1fr 1fr
+      }
+    }
+
+    .footer-brand {
+      font-size: 1.2rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #6c47ff, #f72585);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: .5rem
+    }
+
+    .footer-desc {
+      font-size: .8rem;
+      color: var(--t3);
+      line-height: 1.6;
+      max-width: 240px
+    }
+
+    .footer-col h4 {
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--t3);
+      margin-bottom: .75rem
+    }
+
+    .footer-col a {
+      display: block;
+      font-size: .82rem;
+      color: var(--t2);
+      text-decoration: none;
+      margin-bottom: .4rem;
+      transition: color .2s
+    }
+
+    .footer-col a:hover {
+      color: var(--t1)
+    }
+
+    .footer-bottom {
+      max-width: 1200px;
+      margin: 2rem auto 0;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: .75rem;
+      color: var(--t3)
+    }
+
+    /* TRUST BADGES */
+    .trust-row {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 1rem 2rem 2rem;
+      max-width: 900px;
+      margin: 0 auto
+    }
+
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .78rem;
+      color: var(--t3)
+    }
+
+    /* TOAST */
+    #toasts {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 15px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, .4);
+      animation: tslide .3s ease, tfade .3s 3.7s forwards;
+      max-width: 340px
+    }
+
+    .toast.ok {
+      border-color: rgba(6, 214, 160, .4)
+    }
+
+    .toast.er {
+      border-color: rgba(239, 35, 60, .4)
+    }
+
+    .toast.wa {
+      border-color: rgba(244, 162, 97, .4)
+    }
+
+    @keyframes tslide {
+      from {
+        transform: translateX(80px);
+        opacity: 0
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1
+      }
+    }
+
+    @keyframes tfade {
+      from {
+        opacity: 1
+      }
+
+      to {
+        opacity: 0;
+        transform: translateX(20px)
+      }
+    }
+
+    .sp {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, .2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      margin-right: 6px;
+      vertical-align: middle
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <div class="logo" onclick="showEvents()">🎟 TicketHub <div class="live-dot"></div>
+    </div>
+    <div class="nav-right">
+      <button class="nav-btn nav-back" id="nav-back" onclick="showEvents()">← All Events</button>
+      <button class="nav-btn" onclick="showEvents()">🏠 Home</button>
+      <button class="nav-btn"
+        style="background:rgba(108,71,255,.15);border-color:rgba(108,71,255,.4);color:#b3a4f5">Sign In</button>
+    </div>
+  </nav>
+
+  <!-- EVENTS PAGE -->
+  <div id="page-events" class="page active">
+    <div class="hero">
+      <div class="hero-bg"></div>
+      <h1>Find Your Next<br />Live Experience</h1>
+      <p>Real-time seat locking · Distributed microservices · Zero double bookings</p>
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" placeholder="Search artists, venues, cities…" oninput="filterEvents()" />
+      </div>
+    </div>
+
+    <div class="filters" id="filters">
+      <button class="filter-btn active" onclick="setFilter('all',this)">All Events</button>
+      <button class="filter-btn" onclick="setFilter('pop',this)">🎤 Pop</button>
+      <button class="filter-btn" onclick="setFilter('hip-hop',this)">🎧 Hip-Hop</button>
+      <button class="filter-btn" onclick="setFilter('rnb',this)">🎵 R&amp;B</button>
+      <button class="filter-btn" onclick="setFilter('indie',this)">🎸 Indie</button>
+      <button class="filter-btn" onclick="setFilter('latin',this)">🎺 Latin</button>
+      <button class="filter-btn" onclick="setFilter('electronic',this)">🎛 Electronic</button>
+    </div>
+
+    <div id="events-grid" class="events-grid">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+
+    <div class="trust-row">
+      <div class="trust-item">🔒 Secure Payments</div>
+      <div class="trust-item">⚡ Instant Confirmation</div>
+      <div class="trust-item">🔄 Easy Refunds</div>
+      <div class="trust-item">🤝 100% Verified Tickets</div>
+      <div class="trust-item">🛡 Buyer Guarantee</div>
+    </div>
+
+    <div class="faq-section">
+      <div class="faq-title">Frequently Asked Questions</div>
+      <div class="faq-item" id="faq0">
+        <div class="faq-q" onclick="toggleFaq(0)">How does real-time seat locking work? <span class="chevron">▾</span>
+        </div>
+        <div class="faq-a">
+          <p>When you click a seat, we instantly place a 30-second distributed lock via Redis. No one else can book that
+            seat during checkout. If you don't complete payment, the lock expires automatically and the seat returns to
+            available.</p>
+        </div>
+      </div>
+      <div class="faq-item" id="faq1">
+        <div class="faq-q" onclick="toggleFaq(1)">What if two people click the same seat at the same time? <span
+            class="chevron">▾</span></div>
+        <div class="faq-a">
+          <p>Our Redis SETNX (Set if Not Exists) operation is atomic — only one person can win the lock. The other gets
+            a "seat taken" message instantly. This is the same pattern used by Ticketmaster and Eventbrite.</p>
+        </div>
+      </div>
+      <div class="faq-item" id="faq2">
+        <div class="faq-q" onclick="toggleFaq(2)">Can I get a refund? <span class="chevron">▾</span></div>
+        <div class="faq-a">
+          <p>Yes — refunds are available up to 48 hours before the event. Our payment service processes refunds
+            automatically as a compensating transaction in our distributed booking saga.</p>
+        </div>
+      </div>
+      <div class="faq-item" id="faq3">
+        <div class="faq-q" onclick="toggleFaq(3)">Are there service fees? <span class="chevron">▾</span></div>
+        <div class="faq-a">
+          <p>Yes, a small service fee (10%) and facility charge ($3.50) apply per ticket. These are always shown
+            transparently before you confirm purchase — no hidden fees.</p>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">🎟 TicketHub</div>
+          <div class="footer-desc">The best place to buy and sell tickets for live events. Powered by distributed
+            microservices with real-time seat locking.</div>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <a href="#">About Us</a><a href="#">Careers</a><a href="#">Press</a><a href="#">Blog</a>
+        </div>
+        <div class="footer-col">
+          <h4>Support</h4>
+          <a href="#">Help Center</a><a href="#">Contact Us</a><a href="#">Refund Policy</a><a href="#">Fan
+            Guarantee</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Cookie Policy</a><a
+            href="#">Accessibility</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 TicketHub Inc. All rights reserved.</span>
+        <span>🔒 256-bit SSL Encrypted · PCI DSS Compliant</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- DETAIL PAGE -->
+  <div id="page-detail" class="page">
+    <div class="detail-layout">
+      <div>
+        <div class="detail-hero">
+          <img id="d-img" src="" alt="" />
+          <div class="detail-overlay">
+            <div id="d-title" class="detail-title"></div>
+            <div id="d-meta" class="detail-meta"></div>
+          </div>
+        </div>
+        <div class="map-header">
+          <div class="map-title">Select Your Seat</div>
+          <span id="avail-count" style="font-size:.8rem;color:var(--t2)"></span>
+        </div>
+        <div class="legend">
+          <div class="leg">
+            <div class="leg-dot" style="background:#1e3a2f;border-color:#06d6a0"></div>Available
+          </div>
+          <div class="leg">
+            <div class="leg-dot" style="background:#2a1a4a;border-color:#6c47ff"></div>Selected
+          </div>
+          <div class="leg">
+            <div class="leg-dot" style="background:#3a2a00;border-color:#f4a261"></div>Locked
+          </div>
+          <div class="leg">
+            <div class="leg-dot" style="background:#2a0f1a;border-color:#ef233c"></div>Sold
+          </div>
+        </div>
+        <div class="stage">🎭 &nbsp; S T A G E &nbsp; 🎭</div>
+        <div id="seat-map"></div>
+      </div>
+
+      <!-- CHECKOUT -->
+      <div>
+        <div class="checkout">
+          <div class="co-title">🎟 Your Order</div>
+
+          <div class="timer-bar" id="timer-bar">
+            <span>⏳</span>
+            <span style="font-size:.8rem;color:var(--warn);font-weight:600">Seat reserved!</span>
+            <span class="timer-cd" id="timer-cd">0:30</span>
+          </div>
+
+          <div class="seat-preview" id="seat-preview">Click a green seat to select it</div>
+
+          <div id="checkout-form" style="display:none">
+            <!-- Order summary -->
+            <div id="order-summary"></div>
+            <hr class="divider" />
+
+            <!-- Personal info -->
+            <div
+              style="font-size:.78rem;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.75rem">
+              Personal Information</div>
+            <div class="inp-grp">
+              <label>Full Name <span class="req">*</span></label>
+              <input type="text" id="inp-name" placeholder="Jane Doe" oninput="validateForm()" />
+              <div class="err-msg" id="err-name" style="display:none">Please enter your full name</div>
+            </div>
+            <div class="inp-grp">
+              <label>Email <span class="req">*</span></label>
+              <input type="email" id="inp-email" placeholder="you@example.com" oninput="validateForm()" />
+              <div class="err-msg" id="err-email" style="display:none">Please enter a valid email</div>
+            </div>
+            <div class="inp-grp">
+              <label>Phone (optional)</label>
+              <input type="text" id="inp-phone" placeholder="+1 (555) 000-0000" />
+            </div>
+
+            <hr class="divider" />
+            <div
+              style="font-size:.78rem;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.75rem">
+              Payment Details</div>
+            <div class="inp-grp">
+              <label>Card Number <span class="req">*</span></label>
+              <input type="text" id="inp-card" placeholder="4242 4242 4242 4242" maxlength="19"
+                oninput="fmtCard(this);validateForm()" />
+              <div class="err-msg" id="err-card" style="display:none">Please enter a valid card number</div>
+            </div>
+            <div class="card-row">
+              <div class="inp-grp" style="margin:0">
+                <label>Expiry <span class="req">*</span></label>
+                <input type="text" id="inp-exp" placeholder="MM/YY" maxlength="5"
+                  oninput="fmtExp(this);validateForm()" />
+              </div>
+              <div class="inp-grp" style="margin:0">
+                <label>CVV <span class="req">*</span></label>
+                <input type="text" id="inp-cvv" placeholder="123" maxlength="4" oninput="validateForm()" />
+              </div>
+              <div class="inp-grp" style="margin:0">
+                <label>ZIP</label>
+                <input type="text" id="inp-zip" placeholder="10001" maxlength="5" />
+              </div>
+            </div>
+
+            <button class="btn btn-pri" id="btn-lock" onclick="reserveSeat()" disabled>
+              🔒 Lock My Seat
+            </button>
+            <button class="btn btn-ok" id="btn-pay" onclick="completePurchase()" disabled style="display:none">
+              💳 Complete Purchase
+            </button>
+            <div class="fee-note">🔒 256-bit SSL · PCI Compliant · Instant confirmation</div>
+          </div>
+
+          <div class="saga-log" id="saga-log"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUCCESS PAGE -->
+  <div id="page-success" class="page">
+    <div class="s-icon">🎉</div>
+    <div class="s-title">You're Going!</div>
+    <p style="color:var(--t2)">Confirmation sent to <span id="s-email" style="color:var(--t1);font-weight:600"></span>
+    </p>
+    <div class="ticket-card">
+      <div class="ticket-ref" id="s-ref"></div>
+      <div class="ticket-row"><span class="lbl">Event</span><span class="val" id="s-event"></span></div>
+      <div class="ticket-row"><span class="lbl">Venue</span><span class="val" id="s-venue"></span></div>
+      <div class="ticket-row"><span class="lbl">Date</span><span class="val" id="s-date"></span></div>
+      <div class="ticket-row"><span class="lbl">Seat</span><span class="val" id="s-seat"></span></div>
+      <div class="ticket-row"><span class="lbl">Section</span><span class="val" id="s-section"></span></div>
+      <div class="ticket-row"><span class="lbl">Total Paid</span><span class="val" id="s-total"
+          style="color:var(--ok)"></span></div>
+      <div class="ticket-row"><span class="lbl">Status</span><span class="val" style="color:var(--ok)">✅
+          Confirmed</span></div>
+      <div class="qr-mock">🎫</div>
+    </div>
+    <div style="margin-top:1.5rem">
+      <button class="btn btn-pri" style="max-width:220px;margin:0 auto" onclick="showEvents()">Buy More Tickets</button>
+    </div>
+  </div>
+
+  <div id="toasts"></div>
+
+  <script>
+    const GENRES = {
+      'Taylor Swift': 'pop', 'Coldplay': 'indie', 'Kendrick Lamar': 'hip-hop',
+      'Beyoncé': 'rnb', 'The Weeknd': 'rnb', 'Dua Lipa': 'pop',
+      'Harry Styles': 'pop', 'Bad Bunny': 'latin', 'Drake': 'hip-hop', 'Billie Eilish': 'indie'
+    };
+    const EMOJIS = ['🎸', '🎤', '🎹', '🎻', '🥁', '🎺', '🎷', '🪗', '🎵', '🎶'];
+
+    let S = { events: [], cur: null, seats: [], sel: null, bookingId: null, timerIval: null, pollIval: null, filter: 'all', locked: false };
+
+    function toast(msg, type = 'info') {
+      const icons = { ok: '✅', er: '❌', wa: '⚠️', info: 'ℹ️' };
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.innerHTML = `<span>${icons[type] || 'ℹ️'}</span><span style="font-size:.85rem;font-weight:500">${msg}</span>`;
+      document.getElementById('toasts').appendChild(el);
+      setTimeout(() => el.remove(), 4300);
+    }
+
+    function showSection(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.getElementById('nav-back').style.display = id === 'page-events' ? 'none' : 'flex';
+    }
+
+    function showEvents() { clearTimers(); showSection('page-events'); if (!S.events.length) loadEvents(); }
+
+    function setFilter(f, btn) {
+      S.filter = f;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterEvents();
+    }
+
+    function filterEvents() {
+      const q = document.getElementById('search-input').value.toLowerCase();
+      S.events.forEach(ev => {
+        const el = document.getElementById(`ec-${ev.id}`);
+        if (!el) return;
+        const matchQ = !q || ev.name.toLowerCase().includes(q) || ev.venue.toLowerCase().includes(q) || ev.city.toLowerCase().includes(q);
+        const genre = GENRES[Object.keys(GENRES).find(k => ev.name.includes(k))] || 'pop';
+        const matchF = S.filter === 'all' || genre === S.filter;
+        el.style.display = (matchQ && matchF) ? '' : 'none';
+      });
+    }
+
+    async function loadEvents() {
+      try {
+        const r = await fetch('/api/events');
+        if (!r.ok) throw new Error();
+        S.events = await r.json();
+      } catch { S.events = mockEvents(); }
+      renderEvents();
+    }
+
+    function mockEvents() {
+      const names = ['Taylor Swift: Eras Tour', 'Coldplay: Music of the Spheres', 'Kendrick Lamar World Tour', 'Beyoncé: Renaissance World Tour', 'The Weeknd: After Hours', 'Dua Lipa: Future Nostalgia', 'Harry Styles: Love On Tour', 'Bad Bunny Live', 'Drake: It\'s All A Blur', 'Billie Eilish Tour'];
+      const venues = ['Madison Square Garden', 'SoFi Stadium', 'United Center', 'AT&T Stadium', 'Barclays Center', 'Rogers Centre', 'TD Garden', 'Kaseya Center', 'Scotiabank Arena', 'Chase Center'];
+      const cities = ['New York', 'Los Angeles', 'Chicago', 'Dallas', 'Brooklyn', 'Toronto', 'Boston', 'Miami', 'Toronto', 'San Francisco'];
+      const prices = [150, 120, 100, 130, 110, 90, 95, 105, 115, 125];
+      const images = [
+        'https://images.unsplash.com/photo-1540039155732-d68812a6409b?w=800',
+        'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800',
+        'https://images.unsplash.com/photo-1493225457124-a1a2a5f5f403?w=800',
+        'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800',
+        'https://images.unsplash.com/photo-1470229722913-7c090be5f5ae?w=800',
+        'https://images.unsplash.com/photo-1526478806334-5fd488fcaabc?w=800',
+        'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800',
+        'https://images.unsplash.com/photo-1510511459012-9d0061e8c95c?w=800',
+        'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800',
+        'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=800'
+      ];
+      return names.map((name, i) => ({ id: i + 1, name, venue: venues[i], city: cities[i], date: new Date(2026, 5 + (i % 4), 10 + i, 20, 0).toISOString(), available_seats: Math.floor(Math.random() * 200) + 30, total_seats: 500, price: prices[i], emoji: EMOJIS[i], image_url: images[i] }));
+    }
+
+    function renderEvents() {
+      const grid = document.getElementById('events-grid');
+      grid.innerHTML = S.events.map(ev => {
+        const d = new Date(ev.date);
+        const avail = ev.available_seats || 0;
+        const low = avail > 0 && avail < 50;
+        const sold = avail === 0;
+        const imgUrl = ev.image_url || 'https://images.unsplash.com/photo-1540039155732-d68812a6409b?w=800';
+        return `<div class="event-card" id="ec-${ev.id}" onclick="${sold ? '' : ` openEvent(${ev.id})`}">
+      <img class="card-img" src="${imgUrl}" alt="${ev.name}" />
+      <div class="card-body">
+        <div class="tags"><span class="tag">Live Concert</span>${sold ? '<span class="tag sold-out">Sold Out</span>' : ''}</div>
+        <div class="card-name">${ev.name}</div>
+        <div class="card-meta"><span>📍 ${ev.venue}, ${ev.city}</span><span>📅 ${d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</span></div>
+        <div class="card-footer">
+          <div><div class="price-from">From</div><div class="price-amt">$${ev.price || 90}</div></div>
+          <div class="avail-badge${low ? ' low' : ''}${sold ? ' sold' : ''}">${sold ? 'Sold Out' : low ? `⚠️ ${avail} left` : `${avail} available`}</div>
+        </div>
+      </div>
+    </div>`;
+      }).join('');
+    }
+
+    async function openEvent(id) {
+      S.sel = null; S.bookingId = null; S.locked = false; clearTimers();
+      showSection('page-detail');
+      const ev = S.events.find(e => e.id === id);
+      S.cur = ev;
+      document.getElementById('d-img').src = ev.image_url || `https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800`;
+      document.getElementById('d-title').textContent = ev.name;
+      const d = new Date(ev.date);
+      document.getElementById('d-meta').innerHTML = `<span>📍 ${ev.venue}, ${ev.city}</span><span>📅 ${d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span><span>🕗 ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>`;
+      resetCheckout();
+      await loadSeats(id);
+      startPoll(id);
+    }
+
+    function resetCheckout() {
+      document.getElementById('seat-preview').innerHTML = 'Click a green seat to select it';
+      document.getElementById('checkout-form').style.display = 'none';
+      document.getElementById('timer-bar').classList.remove('on');
+      document.getElementById('saga-log').className = 'saga-log';
+      document.getElementById('saga-log').innerHTML = '';
+      document.getElementById('btn-lock').disabled = true;
+      const bp = document.getElementById('btn-pay');
+      bp.disabled = true; bp.style.display = 'none';
+      ['inp-name', 'inp-email', 'inp-card', 'inp-exp', 'inp-cvv', 'inp-zip', 'inp-phone'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+      ['err-name', 'err-email', 'err-card'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    }
+
+    async function loadSeats(eventId) {
+      try {
+        const r = await fetch(`/api/events/${eventId}/seats`);
+        if (!r.ok) throw new Error();
+        S.seats = await r.json();
+      } catch { S.seats = mockSeats(eventId); }
+      renderMap();
+    }
+
+    function mockSeats(eid) {
+      const secs = [{ n: 'Floor', rows: 4, cols: 10, p: 15000 }, { n: 'Section A', rows: 3, cols: 8, p: 12000 }, { n: 'Section B', rows: 3, cols: 8, p: 9500 }, { n: 'Section C', rows: 3, cols: 8, p: 7500 }, { n: 'Section D', rows: 3, cols: 8, p: 5000 }];
+      const R = 'ABCDEFGHIJ'; let id = 1, res = [];
+      secs.forEach(s => { for (let r = 0; r < s.rows; r++)for (let n = 1; n <= s.cols; n++) { const rnd = Math.random(); res.push({ id: id++, event_id: eid, row: R[r], number: n, section: s.n, price: s.p, status: rnd < .15 ? 'sold' : rnd < .02 ? 'locked' : 'available' }); } });
+      return res;
+    }
+
+    function renderMap() {
+      const container = document.getElementById('seat-map');
+      const secs = [...new Set(S.seats.map(s => s.section))];
+      const avail = S.seats.filter(s => s.status === 'available').length;
+      document.getElementById('avail-count').textContent = `${avail} available`;
+      container.innerHTML = secs.map(sec => {
+        const ss = S.seats.filter(s => s.section === sec);
+        const byRow = {}; ss.forEach(s => { (byRow[s.row] = byRow[s.row] || []).push(s); });
+        const p = (ss[0].price / 100).toFixed(0);
+        return `<div class="sec-group"><div class="sec-label">${sec} — $${p}/seat</div>${Object.entries(byRow).map(([row, seats]) => `<div class="seat-row"><span class="row-lbl">${row}</span>${seats.sort((a, b) => a.number - b.number).map(seat => `<div class="seat ${seat.status}${S.sel?.id === seat.id ? ' selected' : ''}" id="seat-${seat.id}" onclick="selectSeat(${seat.id})" title="${sec} Row ${seat.row} #${seat.number} — $${(seat.price / 100).toFixed(0)}">${seat.number}</div>`).join('')}</div>`).join('')}</div>`;
+      }).join('');
+    }
+
+    function selectSeat(seatId) {
+      if (S.locked) return;
+      const seat = S.seats.find(s => s.id === seatId);
+      if (!seat || seat.status === 'sold' || seat.status === 'locked') { toast('This seat is not available', 'wa'); return; }
+      S.sel = seat; renderMap();
+      const svc = Math.round(seat.price * .1);
+      const fac = 350;
+      const total = seat.price + svc + fac;
+      document.getElementById('seat-preview').innerHTML = `<div style="width:100%">
+    <div class="sp-row"><span class="lbl">Section</span><span class="val">${seat.section}</span></div>
+    <div class="sp-row"><span class="lbl">Row &amp; Seat</span><span class="val">Row ${seat.row}, Seat ${seat.number}</span></div>
+    <div class="sp-row"><span class="lbl">Ticket price</span><span class="val">$${(seat.price / 100).toFixed(2)}</span></div>
+  </div>`;
+      document.getElementById('order-summary').innerHTML = `
+    <div class="sp-row"><span class="lbl">Ticket (Row ${seat.row}, #${seat.number})</span><span class="val">$${(seat.price / 100).toFixed(2)}</span></div>
+    <div class="sp-row"><span class="lbl">Service fee</span><span class="val">$${(svc / 100).toFixed(2)}</span></div>
+    <div class="sp-row"><span class="lbl">Facility charge</span><span class="val">$${(fac / 100).toFixed(2)}</span></div>
+    <div class="sp-row total-row" style="margin-top:6px"><span>Total</span><span class="val">$${(total / 100).toFixed(2)}</span></div>
+  `;
+      document.getElementById('checkout-form').style.display = 'block';
+      validateForm();
+    }
+
+    function validateForm() {
+      const name = document.getElementById('inp-name').value.trim();
+      const email = document.getElementById('inp-email').value.trim();
+      const card = document.getElementById('inp-card').value.replace(/\s/g, '');
+      const exp = document.getElementById('inp-exp').value.trim();
+      const cvv = document.getElementById('inp-cvv').value.trim();
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      const cardOk = card.length >= 15;
+      const expOk = /^\d{2}\/\d{2}$/.test(exp);
+      const cvvOk = cvv.length >= 3;
+      const canLock = name.length > 1 && emailOk && cardOk && expOk && cvvOk && S.sel && !S.locked;
+      document.getElementById('btn-lock').disabled = !canLock;
+      return canLock;
+    }
+
+    function showErr(id, errId, show) {
+      const inp = document.getElementById(id);
+      const err = document.getElementById(errId);
+      if (show) { inp.classList.add('err'); err.style.display = 'block'; } else { inp.classList.remove('err'); err.style.display = 'none'; }
+    }
+
+    function fmtCard(el) {
+      let v = el.value.replace(/\D/g, '').slice(0, 16);
+      el.value = v.match(/.{1,4}/g)?.join(' ') || v;
+    }
+    function fmtExp(el) {
+      let v = el.value.replace(/\D/g, '');
+      if (v.length >= 2) v = v.slice(0, 2) + '/' + v.slice(2, 4);
+      el.value = v;
+    }
+
+    async function reserveSeat() {
+      if (!S.sel || !validateForm()) return;
+      const btn = document.getElementById('btn-lock');
+      btn.disabled = true; btn.innerHTML = '<span class="sp"></span>Locking seat…';
+      S.locked = true;
+      const userId = `user_${Date.now()}`;
+      const svc = Math.round(S.sel.price * .1);
+      const total = S.sel.price + svc + 350;
+      logSaga('⏳ Saga started — contacting ticket-service…', 'p');
+      try {
+        const r = await fetch('/api/bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_id: S.cur.id, seat_id: S.sel.id, user_id: userId, amount_cents: total }) });
+        const data = await r.json();
+        if (data.status === 'confirmed' || r.ok) {
+          (data.saga_steps || []).forEach(s => { logSaga(`${s.status === 'success' ? '✅' : '❌'} ${s.step}: ${s.status}${s.detail ? ' — ' + s.detail : ''}`, (s.status === 'success' ? 's' : 'e')); });
+          logSaga('🎉 Confirmed!', 's');
+          S.bookingId = data.booking_ref;
+          showSuccess({ ...data, email: document.getElementById('inp-email').value });
+        } else {
+          const msg = data.detail?.message || data.message || 'Booking failed';
+          logSaga(`❌ ${msg}`, 'e'); toast(msg, 'er');
+          btn.disabled = false; btn.innerHTML = '🔒 Lock My Seat'; S.locked = false; validateForm();
+        }
+      } catch { simulateSaga(userId, total); }
+    }
+
+    function simulateSaga(userId, total) {
+      logSaga('✅ reserve_seat: Redis lock acquired (NX+EX 30s)', 's');
+      setTimeout(() => logSaga(`✅ process_payment: $${(total / 100).toFixed(2)} captured`, 's'), 500);
+      setTimeout(() => logSaga('✅ confirm_ticket: booking confirmed in DB', 's'), 1000);
+      setTimeout(() => {
+        logSaga('🎉 Saga complete!', 's');
+        S.bookingId = `demo-${Date.now()}`;
+        showSuccess({ booking_ref: S.bookingId, payment_id: `pay_${Date.now()}`, email: document.getElementById('inp-email').value });
+      }, 1300);
+    }
+
+    function showSuccess(data) {
+      clearTimers();
+      const seat = S.sel, ev = S.cur;
+      const svc = Math.round(seat.price * .1), total = seat.price + svc + 350;
+      document.getElementById('s-email').textContent = data.email || document.getElementById('inp-email').value;
+      document.getElementById('s-ref').textContent = `Booking ref: ${data.booking_ref}`;
+      document.getElementById('s-event').textContent = ev?.name || '—';
+      document.getElementById('s-venue').textContent = ev?.venue || '—';
+      document.getElementById('s-date').textContent = ev ? new Date(ev.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : '—';
+      document.getElementById('s-seat').textContent = `Row ${seat?.row}, Seat ${seat?.number}`;
+      document.getElementById('s-section').textContent = seat?.section || '—';
+      document.getElementById('s-total').textContent = `$${(total / 100).toFixed(2)}`;
+      showSection('page-success');
+      toast('🎟 Booking confirmed!', 'ok');
+    }
+
+    function startLockTimer(sec) {
+      const bar = document.getElementById('timer-bar'), cd = document.getElementById('timer-cd');
+      bar.classList.add('on');
+      const end = Date.now() + sec * 1000;
+      clearInterval(S.timerIval);
+      S.timerIval = setInterval(() => {
+        const rem = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+        cd.textContent = `${Math.floor(rem / 60)}:${String(rem % 60).padStart(2, '0')}`;
+        if (rem === 0) { clearInterval(S.timerIval); bar.classList.remove('on'); toast('⏰ Seat lock expired. Please select another seat.', 'wa'); S.locked = false; S.sel = null; renderMap(); resetCheckout(); }
+      }, 500);
+    }
+
+    function startPoll(id) {
+      clearInterval(S.pollIval);
+      S.pollIval = setInterval(async () => {
+        try { const r = await fetch(`/api/events/${id}/seats`); if (r.ok) { const ns = await r.json(); const changed = ns.some(ns => { const o = S.seats.find(s => s.id === ns.id); return o && o.status !== ns.status; }); if (changed) { S.seats = ns; renderMap(); } } } catch { }
+      }, 5000);
+    }
+
+    function logSaga(msg, type = 'p') {
+      const log = document.getElementById('saga-log');
+      log.classList.add('on');
+      const line = document.createElement('div');
+      line.className = `sline ${type}`;
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      log.appendChild(line); log.scrollTop = log.scrollHeight;
+    }
+
+    function clearTimers() { clearInterval(S.timerIval); clearInterval(S.pollIval); }
+
+    function toggleFaq(i) {
+      const item = document.getElementById(`faq${i}`);
+      const ans = item.querySelector('.faq-a');
+      item.classList.toggle('open');
+      ans.classList.toggle('open');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => { showEvents(); });
+  </script>
+</body>
+
+</html>
