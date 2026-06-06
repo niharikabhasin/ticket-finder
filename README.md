@@ -2,8 +2,6 @@
 
 A production-inspired microservices system that demonstrates distributed transaction handling, the **Saga pattern**, **Redis distributed locking**, and **AWS ECS deployment**.
 
-> **Interview talking point**: Solves the "Double-Booking Problem" — two users clicking "Buy" at the exact same millisecond. This is one of the most common senior engineering interview questions.
-
 ---
 
 ## Architecture
@@ -33,14 +31,14 @@ A production-inspired microservices system that demonstrates distributed transac
 
 ---
 
-## The Double-Booking Problem (Core Interview Concept)
+## The Double-Booking Problem
 
 ### The Problem
 Two users click "Buy" at the exact same millisecond for seat #42:
 1. Both read: `SELECT status FROM seats WHERE id=42` → both see `available`
 2. Both write: `UPDATE seats SET status='sold'` → **both succeed** 💀
 
-### Our Solution (Defense-in-Depth)
+### Our Solution
 
 **Layer 1 — Redis Distributed Lock (Primary Guard)**
 ```python
@@ -237,15 +235,3 @@ ticketing-system/
 ```
 
 ---
-
-## Key Interview Points
-
-1. **Redis `SET NX EX`** — The atomic operation that prevents double-booking. `NX` means "only set if not exists." It's a single CPU instruction in Redis, making it race-condition-proof.
-
-2. **Lua script for lock release** — You can't `GET` + `DEL` safely (another process might delete between the two calls). A Lua script runs atomically server-side.
-
-3. **Saga pattern vs 2PC** — Two-Phase Commit requires a coordinator that holds locks globally. Saga uses local transactions + compensating transactions, allowing each service to stay autonomous and scalable.
-
-4. **TTL as a deadlock prevention** — If the client crashes after acquiring the lock, the 30-second TTL ensures the lock auto-expires. Without TTL, a crash = permanent seat lock.
-
-5. **`SELECT FOR UPDATE`** — PostgreSQL pessimistic locking as a secondary guard. Defense-in-depth for the rare edge case where Redis and the DB are briefly out of sync.
